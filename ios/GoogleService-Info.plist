@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.reactjs.native.example.App-02</string>
+	<string>com.namvu.coloringapp</string>
 	<key>PROJECT_ID</key>
 	<string>app02-a5d8c</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:105470312223:ios:d96c0d6007fb70c6823a2a</string>
+	<string>1:105470312223:ios:6d892eede930aba7823a2a</string>
 </dict>
 </plist>
