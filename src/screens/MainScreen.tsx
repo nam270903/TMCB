@@ -24,9 +24,7 @@ const MainScreen = () => {
         style={styles.background} />
 
       {/* Header */}
-      <Header 
-        width="100%"
-        style={styles.header}/>
+      <Header width="100%" style={styles.header}/>
 
       {/* Tabs Menu */}
       <View style={styles.tabs}>

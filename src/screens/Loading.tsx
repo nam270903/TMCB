@@ -1,85 +1,166 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
-import firestore from "@react-native-firebase/firestore";
-import { SvgXml } from "react-native-svg";
-import { SvgItem } from "../../types/firestore";
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Svg, Path } from 'react-native-svg';
+import { useSvgCache } from '../hooks/useSvgCache';
 
-const Loading: React.FC = () => {
-  const [svgData, setSvgData] = useState<SvgItem | null>(null);
-  const [loading, setLoading] = useState(true);
+// Import SVG assets
+import Loading_BG from '../assets/svg_img/Loading_BG.svg';
+import Crayon from '../assets/svg_img/Crayon.svg';
+import Logo from '../assets/svg_img/Logo.svg';
 
+const ZIGZAG_POINTS = [
+  { x: 0, y: 100 },
+  { x: 60, y: 70 },
+  { x: 120, y: 100 },
+  { x: 180, y: 70 },
+  { x: 240, y: 100 },
+  { x: 300, y: 70 },
+];
+
+const MIN_LOADING_TIME = 5000;
+const ANIMATION_DURATION = 400;
+
+export default function LoadingScreen({ navigation }:any) {
+  const { progress, isDone } = useSvgCache();
+  const moveX = useRef(new Animated.Value(0)).current;
+  const moveY = useRef(new Animated.Value(0)).current;
+  const [minTimePassed, setMinTimePassed] = useState(false);
+
+  // Generate zigzag SVG path
+  const zigzagPath = ZIGZAG_POINTS.reduce((path, point, index) => {
+    const command = index === 0 ? `M ${point.x} ${point.y}` : ` L ${point.x} ${point.y}`;
+    return path + command;
+  }, '');
+
+  // Animate crayon along zigzag path
+  const runZigzagAnimation = () => {
+    const animations = ZIGZAG_POINTS.map((point) =>
+      Animated.parallel([
+        Animated.timing(moveX, {
+          toValue: point.x,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
+
+        Animated.timing(moveY, {
+          toValue: point.y,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
+      ])
+    );
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.sequence(animations),
+        Animated.sequence([...animations].reverse()),
+      ])
+    ).start();
+  };
+
+  // Start animation on mount
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const docRef = firestore().collection("svg_img_colored").doc("animal_01_colored");
-        const docSnap = await docRef.get();
-
-        if (docSnap.exists()) {
-          const data = docSnap.data() as SvgItem;
-          setSvgData(data);
-        } else {
-          console.warn("Không tìm thấy document!");
-        }
-      } catch (error) {
-        console.error("Lỗi Firestore:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    runZigzagAnimation();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#888" />
-        <Text>Đang tải dữ liệu...</Text>
-      </View>
-    );
-  }
+  // Ensure minimum loading time
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimePassed(true), MIN_LOADING_TIME);
+    return () => clearTimeout(timer);
+  }, []);
 
-  if (!svgData) {
-    return (
-      <View style={styles.center}>
-        <Text>Không có dữ liệu SVG</Text>
-      </View>
-    );
-  }
+  // Navigate when loading complete
+  useEffect(() => {
+    if (isDone && minTimePassed) {
+      navigation.replace('MainScreen');
+    }
+  }, [isDone, minTimePassed]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.category}>Category: {svgData.category}</Text>
-      <Text style={styles.version}>Version: {svgData.version ?? "N/A"}</Text>
+    <View style={styles.container}>
+      {/* Background */}
+      <Loading_BG
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid slice"
+        style={StyleSheet.absoluteFill} />
 
-      <View style={styles.svgContainer}>
-        <SvgXml xml={svgData.svgContent} width="100%" height="300" />
+      {/* Headers  */}
+      <Logo style={styles.header} />
+
+
+      {/* Zigzag path with animated crayon */}
+      <View style={styles.pathWrapper}>
+        <Svg width={305} height={155}>
+          <Path
+            d={zigzagPath}
+            stroke="#FF9800"
+            strokeWidth={3}
+            strokeDasharray="10,6"
+            fill="none"/>
+        </Svg>
+
+        <Animated.View
+          style={[
+            styles.crayonContainer,
+            {
+              transform: [
+                { translateX: moveX },
+                { translateY: moveY },
+                { rotate: '-15deg' },
+              ],
+            },
+          ]}
+        >
+          <Crayon width={100} height={100} />
+        </Animated.View>
       </View>
-    </ScrollView>
-  );
-};
 
-export default Loading;
+      {/* Progress percentage */}
+      <Text style={styles.percentText}>{Math.round(progress)}%</Text>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-  },
-  center: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  category: {
-    fontSize: 18,
-    fontWeight: "600",
+  header: {
+    position: 'absolute',
+    top: 150,
+    width: 150,
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  version: {
-    marginTop: 4,
-    color: "#666",
+
+  pathWrapper: {
+    position: 'absolute',
+    top: '52%',
+    width: 305,
+    height: 155,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  svgContainer: {
-    alignItems: "center",
-    marginTop: 20,
+  crayonContainer: {
+    position: 'absolute',
+    zIndex: 10,
+    top: -92,
+    left: -49,
+  },
+  percentText: {
+    position: 'absolute',
+    top: '65%',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FF9800',
+    textShadowColor: 'rgba(255,255,255,0.9)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
 });

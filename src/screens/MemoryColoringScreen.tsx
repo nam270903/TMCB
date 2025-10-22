@@ -2,10 +2,12 @@ import * as React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import Loading_BG from '../assets/svg_img/Loading_BG.svg';
 import Return from '../components/Return.tsx';
+import CategoryBar from '../components/CategoryBar.tsx';
 
 interface MemoryColoringScreenProps {}
 
 const MemoryColoringScreen = (props: MemoryColoringScreenProps) => {
+    
   return (
     <View style={styles.container}>
         {/* Background */}
@@ -17,8 +19,13 @@ const MemoryColoringScreen = (props: MemoryColoringScreenProps) => {
 
         {/* Header */}
         <View style={styles.returnBtn}>
-        <Return />
+            <Return/>
         </View>
+
+        {/* Category Bar */}
+        <CategoryBar/>
+
+        {/* Display Images */}
     </View>
   );
 };
