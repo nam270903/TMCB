@@ -15,7 +15,7 @@ export function useSvgCache() {
         let totalDocs = 0;
         let cached = 0;
 
-        // Đếm tổng số document trước
+        // Đếm tổng số document
         const counts = await Promise.all(
           COLLECTIONS.map(async (name) => {
             const snap = await firestore().collection(name).get();
@@ -28,7 +28,7 @@ export function useSvgCache() {
         for (const collectionName of COLLECTIONS) {
           const snapshot = await firestore().collection(collectionName).get();
 
-          // Chạy Promise.all để tải song song nhanh hơn
+          // Chạy Promise.all để tải song song
           await Promise.all(
             snapshot.docs.map(async (doc) => {
               const data = doc.data();
@@ -62,9 +62,9 @@ export function useSvgCache() {
         }
 
         setIsDone(true);
-        console.log('🎉 All SVGs cached successfully!');
+        console.log('SVGs cached successfully!');
       } catch (error) {
-        console.error('🔥 Error caching SVGs:', error);
+        console.error('Error caching SVGs:', error);
       }
     };
 
