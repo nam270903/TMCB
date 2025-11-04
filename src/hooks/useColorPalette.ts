@@ -1,65 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import RNFS from 'react-native-fs';
 
-/**
- * Hook sinh bảng màu từ file SVG colored.
- * Nếu không có SVG colored, dùng fallback mặc định.
- */
-export function useColorPalette(coloredSvgUri?: string) {
-  const [colors, setColors] = useState<string[]>([]);
-  const [selectedColor, setSelectedColor] = useState<string>('#000000');
+export interface ColorItem {
+  id: string;
+  color: string;
+}
+
+export function useColorPalette(coloredSvgUri: string) {
+  const [colors, setColors] = useState<ColorItem[]>([]);
+  const [selectedColor, setSelectedColor] = useState<string>('');
 
   useEffect(() => {
-    const extractColorsFromSvg = async () => {
-      if (!coloredSvgUri) {
-        setColors(DEFAULT_COLORS);
-        return;
-      }
-
+    const loadColors = async () => {
       try {
         const path = coloredSvgUri.replace('file://', '');
-        const svgContent = await RNFS.readFile(path, 'utf8');
+        const content = await RNFS.readFile(path, 'utf8');
 
-        // Regex lấy tất cả fill="#xxxxxx" hoặc fill='rgb(...)'
-        const fillRegex = /fill="(#[0-9A-Fa-f]{3,6}|rgb\([^)]+\))"/g;
-        const matches = svgContent.match(fillRegex);
+        // 🎯 Regex: bắt tất cả fill dạng hex, rgb, rgba, hsl, hsla
+        const regex =
+          /fill=(?:"|')((#[0-9A-Fa-f]{3,8})|(rgb[a]?\([^)]+\))|(hsl[a]?\([^)]+\)))(?:"|')/g;
 
-        if (matches && matches.length > 0) {
-          const uniqueColors = Array.from(
-            new Set(
-              matches
-                .map((m) => m.replace(/fill=|"/g, ''))
-                .filter((c) => c !== 'none' && c !== '#fff' && c !== '#ffffff')
-            )
-          );
-          setColors(uniqueColors.slice(0, 20)); // chỉ lấy tối đa 12 màu
-          setSelectedColor(uniqueColors[0]);
-        } else {
-          setColors(DEFAULT_COLORS);
-          setSelectedColor(DEFAULT_COLORS[0]);
+        const colorCounts = new Map<string, number>();
+        let match;
+
+        while ((match = regex.exec(content))) {
+          const color = match[1].trim().toLowerCase();
+          if (color !== 'none') {
+            colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+          }
         }
-      } catch (error) {
-        console.warn('⚠️ Không thể đọc màu từ SVG:', error);
-        setColors(DEFAULT_COLORS);
+
+        // Sắp xếp màu theo tần suất xuất hiện (giảm dần) và lấy top 20
+        const colorList = Array.from(colorCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 12)
+          .map(([color], i) => ({
+            id: `color_${i}`,
+            color,
+          }));
+
+        setColors(colorList);
+        setSelectedColor(colorList[0]?.color || '#000');
+      } catch (err) {
+        console.error('❌ Error loading color palette:', err);
       }
     };
 
-    extractColorsFromSvg();
+    loadColors();
   }, [coloredSvgUri]);
 
   return { colors, selectedColor, setSelectedColor };
 }
-
-// 🎨 fallback màu mặc định
-const DEFAULT_COLORS = [
-  '#E53935', // đỏ
-  '#FDD835', // vàng
-  '#43A047', // xanh lá
-  '#1E88E5', // xanh dương
-  '#8E24AA', // tím
-  '#F48FB1', // hồng
-  '#A1887F', // nâu nhạt
-  '#757575', // xám
-  '#000000', // đen
-  '#FFFFFF', // trắng
-];

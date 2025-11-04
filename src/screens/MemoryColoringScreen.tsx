@@ -26,10 +26,8 @@ const MemoryColoringScreen = () => {
   return (
     <View style={styles.container}>
       {/* Background */}
-      <Loading_BG
-        width="100%"
-        height="100%"
-        preserveAspectRatio="xMidYMid slice"
+      <Loading_BG width="100%" height="100%" 
+        preserveAspectRatio="xMidYMid slice" 
         style={StyleSheet.absoluteFill}/>
 
       {/* Header */}
@@ -40,10 +38,10 @@ const MemoryColoringScreen = () => {
         </View>
       </View>
 
-      {/* Category Bar */}
+      {/* Category Bar
       <View style={styles.categoryWrapper}>
         <CategoryBar />
-      </View>
+      </View> */}
 
       {/* Image Grid */}
       <FlatList
@@ -63,8 +61,7 @@ const MemoryColoringScreen = () => {
               uri={item}
               width={width * 0.3}
               height={width * 0.4}
-              style={styles.svg}
-            />
+              style={styles.svg}/>
           </TouchableOpacity>
         )}
         contentContainerStyle={styles.listContainer}
