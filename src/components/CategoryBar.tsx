@@ -15,15 +15,15 @@ import Study from '../assets/categoryIcon/study.svg';
 
 const categories = [
   { id: 'all', icon: <All /> },
-  { id: 'animals', icon: <Animals /> },
-  { id: 'cars', icon: <Cars /> },
-  { id: 'cities', icon: <Cities /> },
-  { id: 'dinos', icon: <Dinos /> },
-  { id: 'family', icon: <Family /> },
-  { id: 'foods', icon: <Foods /> },
-  { id: 'jobs', icon: <Jobs /> },
-  { id: 'natural', icon: <Natural /> },
-  { id: 'study', icon: <Study /> },
+  { id: 'animals', icon: <Animals/> },
+  { id: 'cars', icon: <Cars/> },
+  { id: 'cities', icon: <Cities/> },
+  { id: 'dinos', icon: <Dinos/> },
+  { id: 'family', icon: <Family/> },
+  { id: 'foods', icon: <Foods/> },
+  { id: 'jobs', icon: <Jobs/> },
+  { id: 'natural', icon: <Natural/> },
+  { id: 'study', icon: <Study/> },
 ];
 
 interface CategoryBarProps {

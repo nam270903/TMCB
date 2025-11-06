@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import ShareLib from 'react-native-share';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSvgFiles } from '../hooks/useLocalSvgFiles';
 
 interface SubmitBarProps {
   isComplete?: boolean;
@@ -16,6 +17,7 @@ interface SubmitBarProps {
 
 const SubmitBar = ({ isComplete = false, userImage, onSubmit }: SubmitBarProps) => {
   const navigation = useNavigation<any>();
+  const svgFiles = useLocalSvgFiles();
 
   /** 🖼 Lưu ảnh user tô vào gallery của app */
   const handleSaveToAppGallery = async () => {
@@ -32,18 +34,17 @@ const SubmitBar = ({ isComplete = false, userImage, onSubmit }: SubmitBarProps) 
     }
   };
 
-  /** 💾 Lưu vào thư viện máy */
-  const handleSaveToDevice = async () => {
+    /** 💾 Lưu vào thư viện máy */
+    const handleSaveToDevice = async () => {
     if (!userImage) return;
     try {
-      // Sử dụng saveToCameraRoll thay vì save
-      await CameraRoll.saveToCameraRoll(userImage, 'photo');
-      Alert.alert('✅ Đã lưu vào thư viện máy!');
+        await CameraRoll.saveAsset(userImage, { type: 'photo' });
+        Alert.alert('✅ Đã lưu vào thư viện máy!');
     } catch (error) {
-      console.error('Lỗi lưu CameraRoll:', error);
-      Alert.alert('❌ Lỗi', 'Không thể lưu ảnh. Vui lòng kiểm tra quyền truy cập thư viện.');
+        console.error('Lỗi lưu CameraRoll:', error);
+        Alert.alert('❌ Lỗi', 'Không thể lưu ảnh. Vui lòng kiểm tra quyền truy cập thư viện.');
     }
-  };
+    };
 
   /** 📤 Chia sẻ qua mạng xã hội */
   const handleShareSocial = async () => {
@@ -65,11 +66,7 @@ const SubmitBar = ({ isComplete = false, userImage, onSubmit }: SubmitBarProps) 
     if (!userImage) return;
 
     if (Platform.OS === 'ios') {
-      const options = [
-        'Lưu vào thư viện máy',
-        'Chia sẻ qua mạng xã hội',
-        'Hủy',
-      ];
+      const options = ['Lưu vào thư viện máy', 'Chia sẻ qua mạng xã hội', 'Hủy'];
 
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -90,66 +87,56 @@ const SubmitBar = ({ isComplete = false, userImage, onSubmit }: SubmitBarProps) 
         }
       );
     } else {
-      // Android: Hiển thị Alert với options
-      Alert.alert(
-        'Chia sẻ ảnh',
-        'Chọn cách bạn muốn chia sẻ',
-        [
-          {
-            text: 'Lưu vào thư viện máy',
-            onPress: handleSaveToDevice,
-          },
-          {
-            text: 'Chia sẻ qua mạng xã hội',
-            onPress: handleShareSocial,
-          },
-          {
-            text: 'Hủy',
-            style: 'cancel',
-          },
-        ]
-      );
+      Alert.alert('Chia sẻ ảnh', 'Chọn cách bạn muốn chia sẻ', [
+        { text: 'Lưu vào thư viện máy', onPress: handleSaveToDevice },
+        { text: 'Chia sẻ qua mạng xã hội', onPress: handleShareSocial },
+        { text: 'Hủy', style: 'cancel' },
+      ]);
     }
   };
 
-  /** 🪄 Hoàn tất */
+  /** 🪄 Hoàn tất (màn tô màu) */
   const handleSubmit = async () => {
     if (onSubmit) return onSubmit();
     navigation.navigate('CompleteScreen', {});
+  };
+
+  /** 🔁 Tiếp tục tô ảnh mới ngẫu nhiên */
+  const handleContinue = () => {
+    const uncoloredFiles = svgFiles.filter((uri) => uri.includes('_uncolored'));
+    if (uncoloredFiles.length === 0) {
+      Alert.alert('🎉 Tuyệt vời!', 'Bạn đã hoàn thành tất cả tranh!');
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * uncoloredFiles.length);
+    const randomUri = uncoloredFiles[randomIndex];
+    navigation.navigate('ColoringScreen', { svgUri: randomUri });
   };
 
   return (
     <View style={styles.container}>
       {/* Nút trái */}
       <View style={styles.leftButtons}>
-        <TouchableOpacity 
-          onPress={isComplete ? handleSaveToAppGallery : undefined}
-          disabled={!isComplete}
-        >
+        <TouchableOpacity onPress={isComplete ? handleSaveToAppGallery : undefined} disabled={!isComplete}>
           <View style={[styles.iconButton, !isComplete && styles.disabled]}>
             <SaveToGallery width={50} height={50} />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          onPress={isComplete ? handleShare : undefined}
-          disabled={!isComplete}
-        >
+        <TouchableOpacity onPress={isComplete ? handleShare : undefined} disabled={!isComplete}>
           <View style={[styles.iconButton, !isComplete && styles.disabled]}>
             <Share width={50} height={50} />
           </View>
         </TouchableOpacity>
       </View>
 
-      {/* Nút Hoàn tất (chỉ hiện ở màn tô màu) */}
-      {!isComplete && (
-        <TouchableOpacity onPress={handleSubmit}>
-          <View style={styles.submitWrapper}>
-            <SubmitButton width={220} height={60} />
-            <Text style={styles.submitText}>Hoàn tất</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      {/* 🎨 Nút trung tâm */}
+      <TouchableOpacity onPress={isComplete ? handleContinue : handleSubmit}>
+        <View style={styles.submitWrapper}>
+          <SubmitButton width={220} height={60} />
+          <Text style={styles.submitText}>{isComplete ? 'Tiếp tục' : 'Hoàn tất'}</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -176,13 +163,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
-
   leftButtons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
-
   iconButton: {
     width: 50,
     height: 50,
@@ -195,17 +180,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-
   disabled: {
     opacity: 0.5,
   },
-
   submitWrapper: {
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   submitText: {
     position: 'absolute',
     color: '#FFFFFF',
