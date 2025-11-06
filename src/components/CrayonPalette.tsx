@@ -5,8 +5,8 @@ import { ColorItem } from '../hooks/useColorPalette';
 
 interface CrayonPaletteProps {
   colors: ColorItem[];
-  selectedColor: string;
-  onSelect: (color: string) => void;
+  selectedColor: string | null;
+  onSelect: (color: string | null) => void;
 }
 
 const CrayonPalette: React.FC<CrayonPaletteProps> = ({

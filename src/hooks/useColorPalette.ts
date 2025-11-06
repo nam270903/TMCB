@@ -8,7 +8,7 @@ export interface ColorItem {
 
 export function useColorPalette(coloredSvgUri: string) {
   const [colors, setColors] = useState<ColorItem[]>([]);
-  const [selectedColor, setSelectedColor] = useState<string>('');
+const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   useEffect(() => {
     const loadColors = async () => {
