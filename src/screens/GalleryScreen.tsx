@@ -38,6 +38,7 @@ const GalleryScreen = () => {
   if (images.length === 0) {
     return (
       <View style={styles.emptyContainer}>
+        
         <Text style={styles.emptyText}>📁 Chưa có tranh nào được lưu</Text>
       </View>
     );

@@ -94,10 +94,9 @@ const CompleteScreen = () => {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.redoButton}
-          activeOpacity={0.8}
         >
           <View style={styles.redoIconWrapper}>
-            <RedoBtn width={32} height={32} />
+            <RedoBtn width={50} height={50} />
           </View>
           <Text style={styles.redoText}>Tô màu lại</Text>
         </TouchableOpacity>
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
   // Score
   scoreSection: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 30,
     paddingHorizontal: 30,
   },
 
@@ -249,9 +248,6 @@ const styles = StyleSheet.create({
   },
 
   redoIconWrapper: {
-    width: 64,
-    height: 64,
-    backgroundColor: '#FFB6C1',
     alignItems: 'center',
     justifyContent: 'center',
   },

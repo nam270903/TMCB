@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
-// CategoryBar Component
+// Category Icons
 import All from '../assets/categoryIcon/all.svg';
 import Animals from '../assets/categoryIcon/animals.svg';
 import Cars from '../assets/categoryIcon/cars.svg';
@@ -13,24 +13,40 @@ import Jobs from '../assets/categoryIcon/jobs.svg';
 import Natural from '../assets/categoryIcon/natural.svg';
 import Study from '../assets/categoryIcon/study.svg';
 
-const CategoryBar = () => {
+const categories = [
+  { id: 'all', icon: <All /> },
+  { id: 'animals', icon: <Animals /> },
+  { id: 'cars', icon: <Cars /> },
+  { id: 'cities', icon: <Cities /> },
+  { id: 'dinos', icon: <Dinos /> },
+  { id: 'family', icon: <Family /> },
+  { id: 'foods', icon: <Foods /> },
+  { id: 'jobs', icon: <Jobs /> },
+  { id: 'natural', icon: <Natural /> },
+  { id: 'study', icon: <Study /> },
+];
+
+interface CategoryBarProps {
+  activeFilter: string;
+  onSelectCategory: (category: string) => void;
+}
+
+const CategoryBar = ({ activeFilter, onSelectCategory }: CategoryBarProps) => {
   return (
     <View style={styles.wrapper}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.container}>
-            <TouchableOpacity>  <All/>      </TouchableOpacity>
-            <TouchableOpacity>  <Animals/>  </TouchableOpacity>
-            <TouchableOpacity>  <Cars/>     </TouchableOpacity>
-            <TouchableOpacity>  <Cities/>   </TouchableOpacity>
-            <TouchableOpacity>  <Dinos/>    </TouchableOpacity>
-            <TouchableOpacity>  <Family/>   </TouchableOpacity>
-            <TouchableOpacity>  <Foods/>    </TouchableOpacity>
-            <TouchableOpacity>  <Jobs/>     </TouchableOpacity>
-            <TouchableOpacity>  <Natural/>  </TouchableOpacity>
-            <TouchableOpacity>  <Study/>    </TouchableOpacity>    
-      </ScrollView>
+      <View style={styles.container}>
+        {categories.map(cat => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[
+              styles.iconWrapper,
+              activeFilter === cat.id && styles.activeIcon,
+            ]}
+            onPress={() => onSelectCategory(cat.id)}>
+            {cat.icon}
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 };
@@ -38,14 +54,21 @@ const CategoryBar = () => {
 export default CategoryBar;
 
 const styles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
+  wrapper: { 
+    width: '100%' 
   },
   container: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 16, 
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  iconWrapper: {
+    // opacity: 0.6,
+  },
+  activeIcon: {
+    opacity: 1,
+    transform: [{ scale: 1.05 }],
   },
 });
