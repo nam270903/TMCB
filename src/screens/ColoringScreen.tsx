@@ -1,9 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Modal, Dimensions } from 'react-native';
-import { Svg, Path, SvgUri, G } from 'react-native-svg';
+import { Svg, Path, G } from 'react-native-svg';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import ViewShot from 'react-native-view-shot';
+import RNFS from 'react-native-fs';
+import { SvgXml } from 'react-native-svg';
 
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useInteractiveSvg } from '../hooks/useInteractiveSvg';
@@ -22,20 +24,44 @@ import TimerCountDown from '../components/TimerCountDown';
 
 const { width } = Dimensions.get('window');
 
+/** 🧩 Component đọc SVG cục bộ cross-platform */
+const LocalSvg = ({ path, width, height }: { path: string; width: number; height: number }) => {
+  const [xml, setXml] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadSvg = async () => {
+      try {
+        const normalized = path.startsWith('file://') ? path.replace('file://', '') : path;
+        const content = await RNFS.readFile(normalized, 'utf8');
+        setXml(content);
+      } catch (err) {
+        console.error('❌ Lỗi đọc SVG:', err);
+      }
+    };
+    loadSvg();
+  }, [path]);
+
+  if (!xml) return null;
+  return <SvgXml xml={xml} width={width} height={height} />;
+};
+
 const ColoringScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { svgUri } = route.params;
 
   const [isSampleVisible, setSampleVisible] = useState(false);
+
+  // 🩷 Tạo đường dẫn SVG mẫu (colored)
   const coloredUri = svgUri.replace('_uncolored', '_colored');
 
+  // 🖍️ Hook màu sắc
   const { colors, selectedColor, setSelectedColor } = useColorPalette(coloredUri);
   const { paths, fillPath } = useInteractiveSvg(svgUri);
 
   const viewShotRef = useRef<ViewShot>(null);
 
-  // Zoom gesture
+  // 🎚️ Zoom / Pan gesture
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -77,6 +103,7 @@ const ColoringScreen = () => {
     ],
   }));
 
+  // 🎨 Chọn màu
   const handleSelect = (color: string | null) => {
     if (selectedColor === color) setSelectedColor(null);
     else setSelectedColor(color);
@@ -102,14 +129,18 @@ const ColoringScreen = () => {
 
   const handleReturnPress = () => navigation.goBack();
 
-  // Capture user painting and go to complete screen
+  // 📸 Capture user painting
   const handleSubmit = async () => {
     try {
       if (!viewShotRef.current) return;
-      const uri = viewShotRef.current && viewShotRef.current.capture ? await viewShotRef.current.capture() : null;
+      const uri = await viewShotRef.current.capture?.();
       if (!uri) return;
       console.log('🎨 Ảnh người dùng tô:', uri);
-      navigation.navigate('CompleteScreen', { userImage: uri, userPaths: paths, coloredUri, });
+      navigation.navigate('CompleteScreen', {
+        userImage: uri,
+        userPaths: paths,
+        coloredUri,
+      });
     } catch (error) {
       console.error('Lỗi khi chụp ảnh:', error);
     }
@@ -118,35 +149,35 @@ const ColoringScreen = () => {
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.container}>
-        {/* HEADER */}
+        {/* 🩵 HEADER */}
         <View style={styles.headerWrapper}>
           <HeaderColoring width="100%" height="15%" style={StyleSheet.absoluteFill} />
           <TouchableOpacity onPress={handleReturnPress} style={styles.returnWrapper}>
-            <ReturnWithBackground width={42} height={40} style={StyleSheet.absoluteFill} />
+            <ReturnWithBackground width={42} height={40} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('MainScreen')} style={styles.homeWrapper}>
-            <HomeBtn width={42} height={40} style={StyleSheet.absoluteFill} />
+            <HomeBtn width={42} height={40} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setSampleVisible(true)} style={styles.sampleThumbnail}>
             <ImgFrame width={55} height={55} style={styles.frame} />
-            <SvgUri uri={coloredUri} width={45} height={45} />
+            <LocalSvg path={coloredUri} width={45} height={45} />
           </TouchableOpacity>
         </View>
 
-        {/* SAMPLE MODAL */}
+        {/* 🩷 SAMPLE MODAL */}
         <Modal transparent animationType="fade" visible={isSampleVisible} onRequestClose={() => setSampleVisible(false)}>
           <View style={styles.overlay}>
             <TouchableOpacity style={styles.overlayBackground} onPress={() => setSampleVisible(false)} />
             <View style={styles.modalContent}>
               <View style={styles.sampleContainer}>
                 <ImgFrame width={width * 0.8} height={width * 0.8} style={styles.frame} />
-                <SvgUri uri={coloredUri} width={width * 0.7} height={width * 0.7} style={styles.svg} />
+                <LocalSvg path={coloredUri} width={width * 0.7} height={width * 0.7} />
               </View>
             </View>
           </View>
         </Modal>
 
-        {/* COLORING CANVAS */}
+        {/* 🖌️ COLORING CANVAS */}
         <View style={styles.svgWrapper}>
           <GestureDetector gesture={composedGesture}>
             <Animated.View style={animatedStyle}>
@@ -176,7 +207,7 @@ const ColoringScreen = () => {
           </GestureDetector>
         </View>
 
-        {/* TIMER + TOOLS */}
+        {/* ⏱️ TIMER + TOOLS */}
         <View style={styles.timerAndToolsBar}>
           <View style={styles.timerWrapper}>
             <TimerCountDown initialMinutes={10} />
@@ -189,12 +220,12 @@ const ColoringScreen = () => {
           </View>
         </View>
 
-        {/* COLOR PALETTE */}
+        {/* 🎨 COLOR PALETTE */}
         <View style={styles.colorBar}>
           <CrayonPalette colors={colors} selectedColor={selectedColor} onSelect={handleSelect} />
         </View>
 
-        {/* SUBMIT BAR */}
+        {/* ✅ SUBMIT BAR */}
         <SubmitBar onSubmit={handleSubmit} />
       </View>
     </GestureHandlerRootView>
@@ -215,9 +246,27 @@ const styles = StyleSheet.create({
   overlayBackground: { ...StyleSheet.absoluteFill },
   modalContent: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   sampleContainer: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  svg: { position: 'absolute', zIndex: 2 },
-  timerAndToolsBar: { position: 'absolute', top: 130, width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25 },
+  timerAndToolsBar: {
+    position: 'absolute',
+    top: 130,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+  },
   timerWrapper: { justifyContent: 'center', alignItems: 'center' },
   toolsWrapper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  colorBar: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#FCE4EC', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingVertical: 10, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  colorBar: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#FCE4EC',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
 });

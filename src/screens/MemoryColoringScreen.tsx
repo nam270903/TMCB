@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions, Text, ScrollView } from 'react-native';
-import { SvgUri } from 'react-native-svg';
+import { SvgXml } from 'react-native-svg';
+import RNFS from 'react-native-fs';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useLocalSvgFiles } from '../hooks/useLocalSvgFiles';
 import Loading_BG from '../assets/svg_img/Loading_BG.svg';
@@ -10,6 +11,28 @@ import Return from '../components/Return';
 import CategoryBar from '../components/CategoryBar';
 
 const { width } = Dimensions.get('window');
+
+/** 🧱 Component đọc SVG cục bộ cross-platform */
+const LocalSvg = ({ path, width, height }: { path: string; width: number; height: number }) => {
+  const [xml, setXml] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadSvg = async () => {
+      try {
+        // Loại bỏ prefix 'file://'
+        const normalizedPath = path.startsWith('file://') ? path.replace('file://', '') : path;
+        const content = await RNFS.readFile(normalizedPath, 'utf8');
+        setXml(content);
+      } catch (err) {
+        console.error('❌ Lỗi đọc SVG:', err);
+      }
+    };
+    loadSvg();
+  }, [path]);
+
+  if (!xml) return null;
+  return <SvgXml xml={xml} width={width} height={height} />;
+};
 
 const MemoryColoringScreen = () => {
   const navigation = useNavigation<any>();
@@ -42,7 +65,7 @@ const MemoryColoringScreen = () => {
       <View style={styles.header}>
         <HeaderFrame width="100%" height={150} preserveAspectRatio="xMidYMid slice" />
         <View style={styles.headerContent}>
-          <TouchableOpacity style={styles.backBtn}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Return />
           </TouchableOpacity>
           <Text style={styles.title}>Tô màu trí nhớ</Text>
@@ -52,7 +75,10 @@ const MemoryColoringScreen = () => {
 
       {/* 🩷 Category Scroll Bar */}
       <View style={styles.categoryScroll}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScrollContent}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScrollContent}>
           <CategoryBar activeFilter={activeFilter} onSelectCategory={setActiveFilter} />
         </ScrollView>
       </View>
@@ -68,7 +94,9 @@ const MemoryColoringScreen = () => {
           <TouchableOpacity style={styles.imageBox} onPress={() => handleImagePress(item)}>
             <View style={styles.imageFrameWrapper}>
               <ImgFrame width={width * 0.42} height={width * 0.42} />
-              <SvgUri uri={item} width={width * 0.35} height={width * 0.35} style={styles.svg} />
+              <View style={styles.svgWrapper}>
+                <LocalSvg path={item} width={width * 0.35} height={width * 0.35} />
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -146,15 +174,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  svg: {
+  svgWrapper: {
     position: 'absolute',
     zIndex: 2,
-  },
-  imageLabel: {
-    marginTop: 6,
-    color: '#FA477C',
-    fontWeight: '800',
-    fontSize: 15,
-    textAlign: 'center',
   },
 });

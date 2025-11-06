@@ -6,14 +6,14 @@ import SettingBtn from '../assets/svg_img/SettingBtn.svg';
 import GalleryBtn from '../assets/svg_img/GalleryBtn.svg';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
-import CloseModal from '../assets/svg_img/CloseModal.svg';
 import SettingModal from './SettingModal';
 
 
 const BottomNav = () => {
-    const [isSettingVisible, setSettingVisible] = useState(false);
+  const [isSettingVisible, setSettingVisible] = useState(false);
 
   const handleSettings = () => setSettingVisible(true);
+
   const closeSettings = () => setSettingVisible(false);
 
   const navigation = useNavigation<any>();
@@ -57,15 +57,20 @@ const BottomNav = () => {
       ) : (
         <View style={styles.androidFallback}>
           <View style={styles.bottomNavigatorContent}>
-            <TouchableOpacity>
-              <MainBtn />
+            <TouchableOpacity onPress={handleNavigateToMain}>
+              <MainBtn/>
             </TouchableOpacity>
-            <TouchableOpacity>
+
+            <TouchableOpacity onPress={handleNavigateToGallery}>
               <GalleryBtn />
             </TouchableOpacity>
-            <TouchableOpacity>
+
+            <TouchableOpacity onPress={handleSettings}>
               <SettingBtn />
             </TouchableOpacity>
+
+            <SettingModal visible={isSettingVisible} onClose={closeSettings} />
+
           </View>
         </View>
       )}

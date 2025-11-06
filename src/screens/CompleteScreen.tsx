@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     marginBottom: 20,
-    // Thêm transform để nghiêng nhẹ
     transform: [{ rotate: '-5deg' }],
   },
 
