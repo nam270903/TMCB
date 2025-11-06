@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "clean:svgs": "ts-node --esm scripts/cleanAndUpdateSVGs.ts"
+    "clean:svgs": "ts-node --esm scripts/cleanAndUpdateSVGs.ts",
+      "android": "react-native run-android",
+      "ios": "react-native run-ios",
+      "start": "react-native start"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
