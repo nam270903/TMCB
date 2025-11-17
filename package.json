@@ -5,7 +5,7 @@
   "scripts": {
     "clean:svgs": "ts-node --esm scripts/cleanAndUpdateSVGs.ts",
       "android": "react-native run-android",
-      "ios": "react-native run-ios",
+      "ios": "react-native run-ios --simulator='iPhone 15 Pro'",
       "start": "react-native start"
   },
   "dependencies": {
